@@ -51,7 +51,7 @@ All logic is in [pawpal_system.py](pawpal_system.py):
 - `Owner` (dataclass): holds pets; `get_all_tasks()` returns every pet's tasks together.
 - `Scheduler`: reads tasks through `Owner.get_all_tasks()` so it works across all pets (sorting, filtering, conflicts, recurrence, daily plan).
 
-Run the demo with `python3 main.py`, the tests with `python3 -m pytest`, and the UI with `streamlit run app.py`.
+Run the demo with `python3 main.py`, the tests with `python3 -m pytest`, and the UI with `python3 -m streamlit run app.py`.
 
 ## Features
 
@@ -145,16 +145,31 @@ Coverage: task completion, adding tasks, sorting and filtering across pets, conf
 
 ## 📸 Demo Walkthrough
 
-The Streamlit app (`streamlit run app.py`) lets you set the owner's daily time budget, add pets, schedule tasks, filter and sort them, mark them complete, and generate today's plan.
+The Streamlit app (`python3 -m streamlit run app.py`) lets you set the owner's daily time budget, add pets, schedule tasks, filter and sort them, mark them complete, and generate today's plan.
 
 Example workflow:
 
 1. Add a pet (e.g. Biscuit, dog) — this creates a `Pet` stored on the `Owner` in `st.session_state`.
+
+   ![Owner settings and add-pet form](docs/screenshots/1-owner-add-pet.png)
+
+   ![Pet added confirmation](docs/screenshots/2-pet-added.png)
+
 2. Add a pet task (e.g. "Morning walk", 08:00, 30 min, high, daily) via the task form.
+
+   ![Schedule a task form](docs/screenshots/3-schedule-task.png)
+
 3. Add a second task for another pet at an overlapping time — the app shows a conflict warning.
 4. View the task table, sorted by time; filter by pet or status.
+
+   ![Sorted task table with filters](docs/screenshots/4-tasks-filter.png)
+
 5. Click "Complete task" on a daily task — the next day's copy appears automatically.
+
 6. Click "Generate schedule" to see today's plan and why it was chosen.
+
+   ![Today's plan with explanation](docs/screenshots/5-plan.png)
+
 
 Key Scheduler behaviors shown: sorting, filtering, conflict warnings, recurrence, and priority/time-budget planning. The CLI equivalent is the `main.py` output above.
 
