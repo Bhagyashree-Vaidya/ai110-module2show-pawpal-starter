@@ -24,7 +24,8 @@ Relationships: an Owner has many Pets, a Pet has many Tasks, and the Scheduler u
 - Added `Task.pet_name` (set by `Pet.add_task`) so the Scheduler can filter and report by pet without walking the pet list.
 - Added `Task.next_occurrence()` and `Scheduler.complete_task()` so recurring tasks create their next copy; the skeleton only had `mark_complete()`.
 - `explain_plan` now takes the plan as an argument, and `detect_conflicts` returns pairs of overlapping tasks.
-- Review of the skeleton flagged a bottleneck: the Scheduler needs one way to reach all tasks, so it reads only through `Owner.get_all_tasks()` rather than touching pets directly.
+- The Scheduler needs one way to reach all tasks, so it reads only through `Owner.get_all_tasks()` rather than touching pets directly.
+- Later additions: `Scheduler.find_next_slot` and `Owner.save`/`load` (with `to_dict`/`from_dict` on `Task` and `Pet`) for JSON persistence.
 
 ---
 
@@ -44,11 +45,18 @@ Conflict detection only warns about overlapping tasks; it does not reschedule th
 
 **a. How you used AI**
 
-I used the AI assistant to brainstorm classes and draft the Mermaid UML, generate dataclass skeletons, implement the Scheduler, and draft the demo and tests. Prompts that named the exact classes and the rubric requirements (e.g. "Scheduler must read from Owner.get_all_tasks") worked best.
+I used Claude Code (an AI coding agent) in one continuous session for the whole project: drafting the Mermaid UML, writing the dataclasses and `Scheduler`, the demo, the tests, the Streamlit wiring, and the docs. It could edit several files at once and run `main.py`, pytest, and a headless Streamlit test itself, which was the most effective feature because it checked its own work. Prompts worked best when they named the exact classes and requirements (e.g. "the Scheduler must read from `Owner.get_all_tasks`"). I did not use separate chat sessions per phase; I kept phases organized by committing after each one instead.
 
 **b. Judgment and verification**
 
-The agent features that helped most were multi-file edits and running the demo and tests directly to check its own work. I kept the design to four classes and did not add extra ones (e.g. a separate Plan class), to avoid unneeded complexity; I also trimmed the duplicate Scheduler/Owner task access down to one source. I verified behavior by running `python3 main.py` (the demo deliberately includes an overlapping walk and feeding) and by running the pytest suite.
+- I kept the design to four classes and rejected extra ones (such as a separate `Plan` class) to avoid complexity, and kept a single source for task access (`Owner.get_all_tasks`).
+- I simplified `_slot_hint`, which first built a temporary Owner/Pet just to exclude one task; I replaced that with an `ignore` parameter on `find_next_slot`.
+- Verification caught two real UI bugs the first draft shipped: the "Next one scheduled" message vanished because `st.rerun()` ran right after `st.success`, and "Mark complete" never marked the task because Streamlit's selectbox returns a copy of object options. I found the second by checking the saved state, not just that the page loaded, and fixed it by selecting by index.
+- Checks: `python3 main.py`, the pytest suite (16 tests), and a headless Streamlit run plus browser screenshots.
+
+**c. Lead architect**
+
+The AI is fast, but I had to decide the class boundaries first, keep the design small, and check behavior against reality. Passing tests and a page that loads were not enough; the state had to be right.
 
 ---
 
@@ -60,7 +68,7 @@ Task completion, adding tasks, sorting and filtering across pets, conflict detec
 
 **b. Confidence**
 
-About 4/5: all 11 tests pass and the Streamlit app was smoke-tested. Next I would test tasks that cross midnight, invalid priority values, and catching up recurring tasks that were missed for several days.
+About 4/5: all 16 tests pass and the Streamlit app was smoke-tested. Next I would test tasks that cross midnight, invalid priority values, and catching up recurring tasks that were missed for several days.
 
 ---
 
@@ -72,8 +80,12 @@ Keeping the Scheduler reading everything through `Owner.get_all_tasks()`, so eve
 
 **b. What you would improve**
 
-Persist data to JSON, add a "next available slot" suggestion for conflicts, and let users edit or delete tasks in the UI.
+Let users edit or delete tasks in the UI, handle tasks that cross midnight, and auto-move a conflicting task into the suggested free slot.
 
 **c. Key takeaway**
 
 The AI is fast at producing code, but the human has to be the lead architect: decide the classes and boundaries first, keep the design small, and verify with tests and a real run. Working in separate phases (design, logic, algorithms, tests, UI) kept each change focused and reviewable.
+
+---
+
+**Time spent:** about 4 hours in total (see the breakdown in the README).

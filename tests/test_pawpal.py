@@ -96,3 +96,39 @@ def test_weekly_recurrence_and_one_off_task():
     s = Scheduler(owner)
     assert s.complete_task(weekly).due_time == T0 + timedelta(weeks=1)
     assert s.complete_task(once) is None and len(a.tasks) == 3
+
+
+def test_find_next_slot_skips_busy_blocks():
+    owner, a, b = make()
+    a.add_task(Task("walk", T0, 30))
+    b.add_task(Task("feed", T0 + timedelta(minutes=30), 30))
+    assert Scheduler(owner).find_next_slot(15, T0) == T0 + timedelta(minutes=60)
+
+
+def test_find_next_slot_none_when_day_full():
+    owner, a, _ = make()
+    a.add_task(Task("all day", T0, 14 * 60))
+    assert Scheduler(owner).find_next_slot(30, T0) is None
+
+
+def test_conflict_warning_suggests_slot():
+    owner, a, b = make()
+    a.add_task(Task("walk", T0, 30))
+    b.add_task(Task("feed", T0 + timedelta(minutes=10), 10))
+    assert "next free slot: 08:30" in Scheduler(owner).conflict_warnings()[0]
+
+
+def test_save_and_load_round_trip(tmp_path):
+    owner, a, _ = make()
+    a.add_task(Task("walk", T0, 30, "high", "daily"))
+    path = tmp_path / "data.json"
+    owner.save(path)
+    loaded = Owner.load(path)
+    assert loaded.name == "Sam" and loaded.pets[0].tasks[0] == a.tasks[0]
+
+
+def test_load_missing_or_corrupt_file_returns_default(tmp_path):
+    assert Owner.load(tmp_path / "nope.json").pets == []
+    bad = tmp_path / "bad.json"
+    bad.write_text("{not json")
+    assert Owner.load(bad).pets == []

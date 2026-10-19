@@ -1,15 +1,19 @@
 from datetime import datetime, time
 
+from pathlib import Path
+
 import streamlit as st
 
 from pawpal_system import Owner, Pet, Scheduler, Task
+
+DATA_FILE = Path(__file__).parent / "data.json"
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 st.title("🐾 PawPal+")
 
 # Streamlit reruns this script on every interaction, so keep the Owner in session_state.
 if "owner" not in st.session_state:
-    st.session_state.owner = Owner("Jordan", available_minutes_per_day=120)
+    st.session_state.owner = Owner.load(DATA_FILE)  # persisted across app restarts
 owner: Owner = st.session_state.owner
 scheduler = Scheduler(owner)
 
@@ -31,6 +35,8 @@ with st.form("add_pet", clear_on_submit=True):
         else:
             st.error("Please enter a pet name.")
 
+owner.save(DATA_FILE)  # persist pets/tasks after any change above
+
 if not owner.pets:
     st.info("Add a pet to start scheduling tasks.")
     st.stop()
@@ -48,6 +54,7 @@ with st.form("add_task", clear_on_submit=True):
         due = datetime.combine(datetime.now().date(), when)
         pet = next(p for p in owner.pets if p.name == target)
         pet.add_task(Task(description, due, int(duration), priority, frequency))
+        owner.save(DATA_FILE)
         st.success(f"Added '{description}' for {target}.")
 
 
@@ -77,15 +84,21 @@ else:
 for warning in scheduler.conflict_warnings():
     st.warning(f"Schedule conflict: {warning}. Consider moving one of them.")
 
+if "flash" in st.session_state:
+    st.success(st.session_state.pop("flash"))  # survives the rerun after completing a task
+
 pending = scheduler.filter_tasks(completed=False)
 if pending:
-    pick = st.selectbox(
-        "Mark complete", pending,
-        format_func=lambda t: f"{t.pet_name}: {t.description} ({t.due_time:%a %H:%M})",
+    # Select by index: Streamlit may hand back a copy of object options, which would not be the stored task.
+    idx = st.selectbox(
+        "Mark complete", range(len(pending)),
+        format_func=lambda i: f"{pending[i].pet_name}: {pending[i].description} ({pending[i].due_time:%a %H:%M})",
     )
+    pick = pending[idx]
     if st.button("Complete task"):
         nxt = scheduler.complete_task(pick)
-        st.success("Done!" + (f" Next one scheduled for {nxt.due_time:%a %H:%M}." if nxt else ""))
+        owner.save(DATA_FILE)
+        st.session_state.flash = "Done!" + (f" Next one scheduled for {nxt.due_time:%a %H:%M}." if nxt else "")
         st.rerun()
 
 st.divider()

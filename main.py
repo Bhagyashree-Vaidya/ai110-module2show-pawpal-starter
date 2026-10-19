@@ -1,16 +1,23 @@
 """Demo script for PawPal+."""
 from datetime import datetime
 
+from tabulate import tabulate
+
 from pawpal_system import Owner, Pet, Scheduler, Task
 
 
+PRIORITY_ICON = {"high": "🔴 high", "medium": "🟡 medium", "low": "🟢 low"}
+
+
 def show(title, tasks):
+    """Print tasks as a formatted table."""
     print(f"\n{title}")
-    print("-" * len(title))
-    for t in tasks:
-        mark = "x" if t.completed else " "
-        print(f"[{mark}] {t.due_time:%H:%M}  {t.pet_name:<8} {t.description:<14} "
-              f"{t.duration_minutes:>3} min  {t.priority}")
+    rows = [
+        ["✅" if t.completed else "⬜", f"{t.due_time:%H:%M}", t.pet_name, t.description,
+         f"{t.duration_minutes} min", PRIORITY_ICON[t.priority]]
+        for t in tasks
+    ]
+    print(tabulate(rows, headers=["", "Time", "Pet", "Task", "Length", "Priority"], tablefmt="rounded_outline"))
 
 
 def main():
@@ -36,7 +43,10 @@ def main():
 
     print("\nConflicts:")
     for warning in scheduler.conflict_warnings():
-        print(f"  WARNING: {warning}")
+        print(f"  ⚠️  {warning}")
+
+    slot = scheduler.find_next_slot(30, at(8))
+    print(f"\nNext free 30-minute slot from 08:00: {slot:%H:%M}")
 
     nxt = scheduler.complete_task(plan[0])
     print(f"\nCompleted '{plan[0].description}'; next one scheduled for {nxt.due_time:%a %H:%M}")
