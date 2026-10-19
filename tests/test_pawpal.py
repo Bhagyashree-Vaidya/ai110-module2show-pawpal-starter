@@ -65,3 +65,34 @@ def test_plan_respects_time_budget_and_priority():
     a.add_task(Task("high", T0 + timedelta(hours=1), 40, "high"))
     plan = Scheduler(owner).build_daily_plan(T0)
     assert [t.description for t in plan] == ["high"]
+
+
+def test_pet_with_no_tasks_and_empty_scheduler():
+    owner, _, _ = make()
+    s = Scheduler(owner)
+    assert s.sort_by_time() == [] and s.detect_conflicts() == [] and s.build_daily_plan(T0) == []
+
+
+def test_identical_times_flagged_with_warning():
+    owner, a, b = make()
+    a.add_task(Task("walk", T0, 20))
+    b.add_task(Task("feed", T0, 10))
+    warnings = Scheduler(owner).conflict_warnings()
+    assert len(warnings) == 1 and "overlaps" in warnings[0]
+
+
+def test_back_to_back_tasks_do_not_conflict():
+    owner, a, _ = make()
+    a.add_task(Task("one", T0, 30))
+    a.add_task(Task("two", T0 + timedelta(minutes=30), 30))
+    assert Scheduler(owner).detect_conflicts() == []
+
+
+def test_weekly_recurrence_and_one_off_task():
+    owner, a, _ = make()
+    weekly, once = Task("bath", T0, frequency="weekly"), Task("vet", T0)
+    a.add_task(weekly)
+    a.add_task(once)
+    s = Scheduler(owner)
+    assert s.complete_task(weekly).due_time == T0 + timedelta(weeks=1)
+    assert s.complete_task(once) is None and len(a.tasks) == 3

@@ -35,8 +35,8 @@ def main():
     show("Whiskers only", scheduler.filter_tasks(pet_name="Whiskers"))
 
     print("\nConflicts:")
-    for a, b in scheduler.detect_conflicts():
-        print(f"  {a.pet_name}'s {a.description} overlaps {b.pet_name}'s {b.description}")
+    for warning in scheduler.conflict_warnings():
+        print(f"  WARNING: {warning}")
 
     nxt = scheduler.complete_task(plan[0])
     print(f"\nCompleted '{plan[0].description}'; next one scheduled for {nxt.due_time:%a %H:%M}")

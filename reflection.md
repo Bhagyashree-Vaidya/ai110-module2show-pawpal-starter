@@ -32,13 +32,11 @@ Relationships: an Owner has many Pets, a Pet has many Tasks, and the Scheduler u
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers due time, task priority, task duration, and the owner's daily time budget. Priority matters most when time is short (high-priority tasks are chosen first), and due time decides display order, since a pet owner mainly needs to know what to do next.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+Conflict detection only warns about overlapping tasks; it does not reschedule them, and it compares every pair of pending tasks (O(n²)). That is reasonable for a household with a handful of daily tasks, keeps the code readable, and leaves the decision to move a task with the owner. I also kept a plain loop-based comprehension over a more compact but harder-to-read version.
 
 ---
 
@@ -50,7 +48,7 @@ I used the AI assistant to brainstorm classes and draft the Mermaid UML, generat
 
 **b. Judgment and verification**
 
-I kept the design to four classes and did not add extra ones (e.g. a separate Plan class), to avoid unneeded complexity; I also trimmed the duplicate Scheduler/Owner task access down to one source. I verified behavior by running `python3 main.py` (the demo deliberately includes an overlapping walk and feeding) and by running the pytest suite.
+The agent features that helped most were multi-file edits and running the demo and tests directly to check its own work. I kept the design to four classes and did not add extra ones (e.g. a separate Plan class), to avoid unneeded complexity; I also trimmed the duplicate Scheduler/Owner task access down to one source. I verified behavior by running `python3 main.py` (the demo deliberately includes an overlapping walk and feeding) and by running the pytest suite.
 
 ---
 
@@ -58,13 +56,11 @@ I kept the design to four classes and did not add extra ones (e.g. a separate Pl
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+Task completion, adding tasks, sorting and filtering across pets, conflict detection (overlap, identical times, back-to-back not flagged), daily/weekly recurrence, empty pets, and the plan's priority and time budget. These are the behaviors the UI depends on and where silent logic bugs would hurt most.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+About 4/5: all 11 tests pass and the Streamlit app was smoke-tested. Next I would test tasks that cross midnight, invalid priority values, and catching up recurring tasks that were missed for several days.
 
 ---
 
@@ -72,12 +68,12 @@ I kept the design to four classes and did not add extra ones (e.g. a separate Pl
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+Keeping the Scheduler reading everything through `Owner.get_all_tasks()`, so every feature naturally works across multiple pets and the UI stays thin.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+Persist data to JSON, add a "next available slot" suggestion for conflicts, and let users edit or delete tasks in the UI.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The AI is fast at producing code, but the human has to be the lead architect: decide the classes and boundaries first, keep the design small, and verify with tests and a real run. Working in separate phases (design, logic, algorithms, tests, UI) kept each change focused and reviewable.

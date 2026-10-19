@@ -114,6 +114,14 @@ class Scheduler:
             if b.due_time < a.end_time
         ]
 
+    def conflict_warnings(self) -> list[str]:
+        """Return human-readable warnings for overlapping tasks (never raises)."""
+        return [
+            f"{a.pet_name}'s '{a.description}' ({a.due_time:%H:%M}-{a.end_time:%H:%M}) "
+            f"overlaps {b.pet_name}'s '{b.description}' ({b.due_time:%H:%M})"
+            for a, b in self.detect_conflicts()
+        ]
+
     def complete_task(self, task: Task) -> Task | None:
         """Complete a task and, if it recurs, schedule the next occurrence on its pet."""
         task.mark_complete()

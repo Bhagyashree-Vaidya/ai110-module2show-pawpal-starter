@@ -36,6 +36,7 @@ classDiagram
         +sort_by_time(tasks) list~Task~
         +filter_tasks(pet_name, completed) list~Task~
         +detect_conflicts() list~tuple~
+        +conflict_warnings() list~str~
         +complete_task(task) Task
         +build_daily_plan(day) list~Task~
         +explain_plan(plan) str
