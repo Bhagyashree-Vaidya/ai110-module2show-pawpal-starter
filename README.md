@@ -213,4 +213,4 @@ Key Scheduler behaviors shown: sorting, filtering, conflict warnings, recurrence
 | Docs, screenshots, reflection | 35 min | README, UML final, screenshots, AI log, reflection |
 | **Total** | **~4 h** | Includes planning, designing, executing, and verifying |
 
-*Times are approximate.*
+*Times are approximate. Planning and early development were done in a separate working repo, so the commit dates in this repo are compressed and don't reflect the total time spent.*
